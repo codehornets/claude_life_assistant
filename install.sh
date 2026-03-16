@@ -25,6 +25,9 @@ curl -fsSL "$REPO_URL/SOUL.md" -o "$TMP_DIR/SOUL.md" || { echo "Failed to downlo
 curl -fsSL "$REPO_URL/USER.md" -o "$TMP_DIR/USER.md" || { echo "Failed to download USER.md"; exit 1; }
 curl -fsSL "$REPO_URL/NOW.md" -o "$TMP_DIR/NOW.md" || { echo "Failed to download NOW.md"; exit 1; }
 
+# Download tier-1 optional files
+curl -fsSL "$REPO_URL/COMMITMENTS.md" -o "$TMP_DIR/COMMITMENTS.md" || { echo "Failed to download COMMITMENTS.md"; exit 1; }
+
 # Download optional files
 curl -fsSL "$REPO_URL/HEARTBEAT.md" -o "$TMP_DIR/HEARTBEAT.md" || { echo "Failed to download HEARTBEAT.md"; exit 1; }
 
@@ -43,6 +46,7 @@ curl -fsSL "$REPO_URL/guides/heartbeat-setup.md" -o "$TMP_DIR/guides/heartbeat-s
 CLAUDE_CODE=false
 OPENCODE=false
 NANOBOT=false
+HERMES=false
 
 if [ -d "$HOME/.claude" ]; then
     CLAUDE_CODE=true
@@ -56,12 +60,133 @@ if [ -d "$HOME/.nanobot" ]; then
     NANOBOT=true
 fi
 
+if command -v hermes >/dev/null 2>&1 || [ -d "$HOME/.hermes" ]; then
+    HERMES=true
+fi
+
 # Determine install target
 TARGET=""
 TARGET_NAME=""
 IS_CLAUDE_CODE=false
+INSTALL_HERMES_SOUL=false
 
-if [ "$CLAUDE_CODE" = true ] && [ "$OPENCODE" = true ]; then
+set_target_from_choice() {
+    case "$1" in
+        claude-global)
+            TARGET="$HOME/.claude"
+            TARGET_NAME="Claude Code (Global)"
+            IS_CLAUDE_CODE=true
+            ;;
+        claude-local)
+            TARGET="."
+            TARGET_NAME="Claude Code (Local)"
+            IS_CLAUDE_CODE=true
+            ;;
+        opencode-global)
+            TARGET="$HOME/.config/opencode"
+            TARGET_NAME="opencode (Global)"
+            ;;
+        opencode-local)
+            TARGET="."
+            TARGET_NAME="opencode (Local)"
+            ;;
+        hermes-workspace)
+            TARGET="."
+            TARGET_NAME="Hermes (Workspace)"
+            INSTALL_HERMES_SOUL=true
+            ;;
+        hermes-workspace-only)
+            TARGET="."
+            TARGET_NAME="Hermes (Workspace only)"
+            ;;
+        *)
+            echo "Invalid choice. Exiting."
+            rm -rf "$TMP_DIR"
+            exit 1
+            ;;
+    esac
+}
+
+if [ "$HERMES" = true ] && [ "$CLAUDE_CODE" = true ] && [ "$OPENCODE" = true ]; then
+    echo "Detected Hermes, Claude Code, and opencode."
+    echo ""
+    echo "Where do you want to install?"
+    echo "  1) Hermes - Workspace here + global SOUL (~/.hermes/SOUL.md)"
+    echo "  2) Hermes - Workspace here only"
+    echo "  3) Claude Code - Global (~/.claude/)"
+    echo "  4) Claude Code - Local (./)"
+    echo "  5) opencode - Global (~/.config/opencode/)"
+    echo "  6) opencode - Local (./)"
+    echo ""
+
+    if [ -e /dev/tty ]; then
+        read -p "Choose [1/2/3/4/5/6]: " choice < /dev/tty
+    else
+        echo "Non-interactive mode. Exiting."
+        rm -rf "$TMP_DIR"
+        exit 1
+    fi
+
+    case $choice in
+        1) set_target_from_choice hermes-workspace ;;
+        2) set_target_from_choice hermes-workspace-only ;;
+        3) set_target_from_choice claude-global ;;
+        4) set_target_from_choice claude-local ;;
+        5) set_target_from_choice opencode-global ;;
+        6) set_target_from_choice opencode-local ;;
+        *) set_target_from_choice invalid ;;
+    esac
+elif [ "$HERMES" = true ] && [ "$CLAUDE_CODE" = true ]; then
+    echo "Detected Hermes and Claude Code."
+    echo ""
+    echo "Where do you want to install?"
+    echo "  1) Hermes - Workspace here + global SOUL (~/.hermes/SOUL.md)"
+    echo "  2) Hermes - Workspace here only"
+    echo "  3) Claude Code - Global (~/.claude/)"
+    echo "  4) Claude Code - Local (./)"
+    echo ""
+
+    if [ -e /dev/tty ]; then
+        read -p "Choose [1/2/3/4]: " choice < /dev/tty
+    else
+        echo "Non-interactive mode. Exiting."
+        rm -rf "$TMP_DIR"
+        exit 1
+    fi
+
+    case $choice in
+        1) set_target_from_choice hermes-workspace ;;
+        2) set_target_from_choice hermes-workspace-only ;;
+        3) set_target_from_choice claude-global ;;
+        4) set_target_from_choice claude-local ;;
+        *) set_target_from_choice invalid ;;
+    esac
+elif [ "$HERMES" = true ] && [ "$OPENCODE" = true ]; then
+    echo "Detected Hermes and opencode."
+    echo ""
+    echo "Where do you want to install?"
+    echo "  1) Hermes - Workspace here + global SOUL (~/.hermes/SOUL.md)"
+    echo "  2) Hermes - Workspace here only"
+    echo "  3) opencode - Global (~/.config/opencode/)"
+    echo "  4) opencode - Local (./)"
+    echo ""
+
+    if [ -e /dev/tty ]; then
+        read -p "Choose [1/2/3/4]: " choice < /dev/tty
+    else
+        echo "Non-interactive mode. Exiting."
+        rm -rf "$TMP_DIR"
+        exit 1
+    fi
+
+    case $choice in
+        1) set_target_from_choice hermes-workspace ;;
+        2) set_target_from_choice hermes-workspace-only ;;
+        3) set_target_from_choice opencode-global ;;
+        4) set_target_from_choice opencode-local ;;
+        *) set_target_from_choice invalid ;;
+    esac
+elif [ "$CLAUDE_CODE" = true ] && [ "$OPENCODE" = true ]; then
     echo "Detected both Claude Code and opencode."
     echo ""
     echo "Where do you want to install?"
@@ -70,7 +195,7 @@ if [ "$CLAUDE_CODE" = true ] && [ "$OPENCODE" = true ]; then
     echo "  3) opencode - Global (~/.config/opencode/)"
     echo "  4) opencode - Local (./)"
     echo ""
-    
+
     if [ -e /dev/tty ]; then
         read -p "Choose [1/2/3/4]: " choice < /dev/tty
     else
@@ -78,31 +203,34 @@ if [ "$CLAUDE_CODE" = true ] && [ "$OPENCODE" = true ]; then
         rm -rf "$TMP_DIR"
         exit 1
     fi
-    
+
     case $choice in
-        1)
-            TARGET="$HOME/.claude"
-            TARGET_NAME="Claude Code (Global)"
-            IS_CLAUDE_CODE=true
-            ;;
-        2)
-            TARGET="."
-            TARGET_NAME="Claude Code (Local)"
-            IS_CLAUDE_CODE=true
-            ;;
-        3)
-            TARGET="$HOME/.config/opencode"
-            TARGET_NAME="opencode (Global)"
-            ;;
-        4)
-            TARGET="."
-            TARGET_NAME="opencode (Local)"
-            ;;
-        *)
-            echo "Invalid choice. Exiting."
-            rm -rf "$TMP_DIR"
-            exit 1
-            ;;
+        1) set_target_from_choice claude-global ;;
+        2) set_target_from_choice claude-local ;;
+        3) set_target_from_choice opencode-global ;;
+        4) set_target_from_choice opencode-local ;;
+        *) set_target_from_choice invalid ;;
+    esac
+elif [ "$HERMES" = true ]; then
+    echo "Detected: Hermes Agent"
+    echo ""
+    echo "Where do you want to install?"
+    echo "  1) Hermes - Workspace here + global SOUL (~/.hermes/SOUL.md)"
+    echo "  2) Hermes - Workspace here only"
+    echo ""
+
+    if [ -e /dev/tty ]; then
+        read -p "Choose [1/2]: " choice < /dev/tty
+    else
+        echo "Non-interactive mode. Exiting."
+        rm -rf "$TMP_DIR"
+        exit 1
+    fi
+
+    case $choice in
+        1) set_target_from_choice hermes-workspace ;;
+        2) set_target_from_choice hermes-workspace-only ;;
+        *) set_target_from_choice invalid ;;
     esac
 elif [ "$CLAUDE_CODE" = true ]; then
     echo "Detected: Claude Code"
@@ -111,7 +239,7 @@ elif [ "$CLAUDE_CODE" = true ]; then
     echo "  1) Global (~/.claude/)"
     echo "  2) Local (./)"
     echo ""
-    
+
     if [ -e /dev/tty ]; then
         read -p "Choose [1/2]: " choice < /dev/tty
     else
@@ -119,23 +247,11 @@ elif [ "$CLAUDE_CODE" = true ]; then
         rm -rf "$TMP_DIR"
         exit 1
     fi
-    
+
     case $choice in
-        1)
-            TARGET="$HOME/.claude"
-            TARGET_NAME="Claude Code (Global)"
-            IS_CLAUDE_CODE=true
-            ;;
-        2)
-            TARGET="."
-            TARGET_NAME="Claude Code (Local)"
-            IS_CLAUDE_CODE=true
-            ;;
-        *)
-            echo "Invalid choice. Exiting."
-            rm -rf "$TMP_DIR"
-            exit 1
-            ;;
+        1) set_target_from_choice claude-global ;;
+        2) set_target_from_choice claude-local ;;
+        *) set_target_from_choice invalid ;;
     esac
 elif [ "$OPENCODE" = true ]; then
     echo "Detected: opencode"
@@ -144,7 +260,7 @@ elif [ "$OPENCODE" = true ]; then
     echo "  1) Global (~/.config/opencode/)"
     echo "  2) Local (./)"
     echo ""
-    
+
     if [ -e /dev/tty ]; then
         read -p "Choose [1/2]: " choice < /dev/tty
     else
@@ -152,24 +268,14 @@ elif [ "$OPENCODE" = true ]; then
         rm -rf "$TMP_DIR"
         exit 1
     fi
-    
+
     case $choice in
-        1)
-            TARGET="$HOME/.config/opencode"
-            TARGET_NAME="opencode (Global)"
-            ;;
-        2)
-            TARGET="."
-            TARGET_NAME="opencode (Local)"
-            ;;
-        *)
-            echo "Invalid choice. Exiting."
-            rm -rf "$TMP_DIR"
-            exit 1
-            ;;
+        1) set_target_from_choice opencode-global ;;
+        2) set_target_from_choice opencode-local ;;
+        *) set_target_from_choice invalid ;;
     esac
 else
-    echo "No Claude Code or opencode installation detected."
+    echo "No Hermes, Claude Code, or opencode installation detected."
     echo ""
     echo "Installing to current directory..."
     TARGET="."
@@ -204,6 +310,15 @@ copy_with_backup "$TMP_DIR/NOW.md" "$TARGET/NOW.md"
 # Copy HEARTBEAT.md
 copy_with_backup "$TMP_DIR/HEARTBEAT.md" "$TARGET/HEARTBEAT.md"
 
+# Copy COMMITMENTS.md
+copy_with_backup "$TMP_DIR/COMMITMENTS.md" "$TARGET/COMMITMENTS.md"
+
+# Optional global SOUL for Hermes
+if [ "$INSTALL_HERMES_SOUL" = true ]; then
+    mkdir -p "$HOME/.hermes"
+    copy_with_backup "$TMP_DIR/SOUL.md" "$HOME/.hermes/SOUL.md"
+fi
+
 # For Claude Code, also create combined CLAUDE.md
 if [ "$IS_CLAUDE_CODE" = true ]; then
     echo ""
@@ -214,7 +329,9 @@ fi
 
 # Copy commands to appropriate location
 if [ "$TARGET" = "." ]; then
-    if [ "$IS_CLAUDE_CODE" = true ]; then
+    if [[ "$TARGET_NAME" == *"Hermes"* ]]; then
+        COMMANDS_DIR="commands"
+    elif [ "$IS_CLAUDE_CODE" = true ]; then
         COMMANDS_DIR=".claude/commands"
     else
         COMMANDS_DIR=".opencode/commands"
@@ -249,13 +366,16 @@ echo -e "${GREEN}Done!${NC}"
 echo ""
 echo "============================================================"
 echo ""
-echo "Your symbiotic agent is ready."
+echo "Your Symbiotic system is ready."
 echo ""
 echo "Core files:"
 echo "  AGENTS.md     - Operations, rules, how the agent works"
 echo "  SOUL.md       - Agent personality and identity"
 echo "  USER.md       - Your profile, psychology, patterns"
 echo "  NOW.md        - Current state, projects, memory log"
+echo ""
+echo "Tier-1 optional file:"
+echo "  COMMITMENTS.md - Said vs Did tracking, repeated promises, follow-through"
 echo ""
 echo "HEARTBEAT (screen-aware accountability):"
 echo "  HEARTBEAT.md  - Watches your screen, pings you on Telegram"
@@ -268,13 +388,20 @@ echo "  /check-day    - Quick accountability check-in"
 echo "  /end-day      - Evening review, capture wins"
 echo "  /reflect      - Deep reflection, creates journal entry"
 echo ""
-echo "The agent reads all files at session start."
-echo "Just start talking. It adapts to you."
+echo "Start one conversation, get a clear next step, and keep going from these files."
+echo "The agent reads them at session start so the next session begins with context."
+if [ "$INSTALL_HERMES_SOUL" = true ]; then
+    echo ""
+    echo "Hermes global voice:"
+    echo "  ~/.hermes/SOUL.md - Stable voice/personality for Hermes"
+fi
 echo ""
 echo "============================================================"
 echo ""
 
-if [[ "$TARGET_NAME" == *"Claude Code"* ]]; then
+if [[ "$TARGET_NAME" == *"Hermes"* ]]; then
+    echo "Run: hermes"
+elif [[ "$TARGET_NAME" == *"Claude Code"* ]]; then
     echo "Run: claude"
 elif [[ "$TARGET_NAME" == *"opencode"* ]]; then
     echo "Run: opencode"

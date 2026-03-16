@@ -1,6 +1,6 @@
 # Symbiotic AI
 
-4 markdown files that turn any AI into a symbiotic agent. Persistent memory, pattern recognition, and autonomous execution across sessions. Not a chatbot. A co-pilot that lives in your filesystem.
+Turn one conversation into a clear next step and a system you can keep using. Symbiotic AI gives any model a durable way to carry your context, commitments, and current direction across sessions.
 
 <a href="https://www.youtube.com/watch?v=tCFSz1vbY6s"><img src="https://i.ibb.co/mCcVCc1m/whiteboard-evolution.jpg" alt="Symbiotic AI Tutorial" border="0"></a>
 
@@ -8,7 +8,7 @@
 
 ## The System
 
-4 files. That's it.
+The system is simple on purpose: a small set of files that turns one useful session into ongoing context.
 
 | File | Purpose | Changes |
 |------|---------|---------|
@@ -33,11 +33,41 @@ The agent reads all 4 at session start. Updates NOW.md as you work. The system g
 
 ## Installation
 
+### Hermes Agent (recommended)
+
+Install Hermes, clone this repo as your workspace, then start Hermes inside it:
+
+```bash
+# 1) Install Hermes Agent
+curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+source ~/.bashrc  # or: source ~/.zshrc
+
+# 2) Clone your Symbiotic workspace
+git clone https://github.com/lout33/symbiotic-ai ~/symbiotic-ai
+cd ~/symbiotic-ai
+
+# 3) Optional but recommended: use the Symbiotic voice globally in Hermes
+mkdir -p ~/.hermes
+cp SOUL.md ~/.hermes/SOUL.md
+
+# 4) Start Hermes from inside the workspace
+hermes
+```
+
+What goes where with Hermes:
+- `SOUL.md` -> global voice at `~/.hermes/SOUL.md`
+- `AGENTS.md`, `USER.md`, `NOW.md` -> live in your workspace/project root
+- Run `hermes` from that workspace so the agent starts with your current context
+
+If you already have a `~/.hermes/SOUL.md`, merge it instead of overwriting it.
+
+### Claude Code / opencode quick installer
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/lout33/symbiotic-ai/main/install.sh | bash
 ```
 
-Or clone and open with your AI coding tool:
+### Manual clone
 
 ```bash
 git clone https://github.com/lout33/symbiotic-ai
@@ -91,13 +121,22 @@ Commands work manually or scheduled via cron. See `commands/README.md`.
 
 The system grows with you. Just create the file. The agent discovers and uses it.
 
+### Tier-1 Optional
+
+These are the first files to add after the core 4.
+
 | File | Purpose | When to Add |
 |------|---------|-------------|
+| `COMMITMENTS.md` | Said vs Did tracking | First optional file to add if you want stronger accountability, pattern detection, and "you said this before" interventions |
 | `WINS.md` | Shipped projects, milestones, pattern breaks | When you need evidence you're making progress |
 | `IDEAS.md` | Quick idea capture | When ideas come faster than you can act |
-| `COMMITMENTS.md` | Said vs Did tracking | When you notice patterns of not following through |
-| `JOURNAL.md` | Longer-form reflections | When sessions aren't enough depth |
 | `LOG_ARCHIVE.md` | Archived memory logs from NOW.md | When NOW.md gets too long |
+
+### Other Optional
+
+| File | Purpose | When to Add |
+|------|---------|-------------|
+| `JOURNAL.md` | Longer-form reflections | When sessions aren't enough depth |
 
 ## HEARTBEAT: Screen-Aware Accountability
 
@@ -123,6 +162,7 @@ One directory, multiple interfaces:
 
 | Framework | Config | Best For |
 |-----------|--------|----------|
+| [Hermes Agent](https://github.com/NousResearch/hermes-agent) | Put `AGENTS.md`, `USER.md`, and `NOW.md` in your workspace. Optionally copy `SOUL.md` to `~/.hermes/SOUL.md` for a stable global voice. Run `hermes` from the workspace root. | Full agent runtime: tools, memory, web, code execution, automation |
 | [OpenClaw](https://github.com/openclaw/openclaw) | Set `workspace` in `~/.openclaw/openclaw.json` | HEARTBEAT, Telegram, scheduled check-ins |
 | Claude Code | `~/.claude/CLAUDE.md` (concatenate the 4 files) | Deep coding sessions |
 | opencode | `~/.config/opencode/` or project root | Terminal-based sessions |
@@ -135,6 +175,14 @@ One directory, multiple interfaces:
 | "Is this about the agent or the user?" | Agent -> SOUL.md. User -> USER.md. |
 | "Is this a protocol or personality?" | Protocol -> AGENTS.md. Personality -> SOUL.md. |
 | "Not sure?" | Put it in NOW.md. Move it later. |
+
+## Community
+
+[GitHub Discussions](https://github.com/lout33/symbiotic-ai/discussions) -- Ask questions, share your setup, propose ideas.
+
+**Show Your Symbiosis:** Post your configuration in [Show and tell](https://github.com/lout33/symbiotic-ai/discussions/categories/show-and-tell). Your SOUL.md personality, conversation screenshots, custom commands. Think r/unixporn but for AI agents.
+
+Want to contribute? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Philosophy
 
